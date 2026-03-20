@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: resume_ai_web
+    ports:
+      - "8000:8000"
+    environment:
+      # Application environment variables. 
+      # We override the DB URL to point to the postgres container instead of localhost
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/resumedb
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GOOGLE_DRIVE_FOLDER_ID=${GOOGLE_DRIVE_FOLDER_ID}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    volumes:
+      # Persist token.json so authentication state remains after restarting the container
+      - ./token.json:/app/token.json
+      # Mount client secrets for initial authentication if required
+      - ./client_secrets1.json:/app/client_secrets1.json
+      # Mount uploads directory to ensure uploaded documents are saved locally
+      - app_uploads:/app/uploads
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    container_name: resume_ai_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: resumedb
+    ports:
+      - "5432:5432"
+    volumes:
+      # Data persistance for postgres database
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  app_uploads:
