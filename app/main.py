@@ -126,3 +126,9 @@ async def create_or_update_job(
         db.rollback()
         print(f"❌ DB ERROR: {e}")
         raise HTTPException(status_code=500, detail="Database operation failed")
+
+from fastapi import Response
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return Response(status_code=204) # 204 means "No Content" - it stops the error
