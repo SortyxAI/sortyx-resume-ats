@@ -1,19 +1,24 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
 
-# 1. Pull the URL from the Render Dashboard
+# 1. Load the file
+load_dotenv()
+
+# 2. Get the URL
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# 2. If it's empty, the app will show a clear error in the logs instead of trying localhost
+# 3. Validation
 if not DATABASE_URL:
-    raise ValueError("FATAL: DATABASE_URL not found! Check Render Environment tab.")
+    # This message tells you EXACTLY where it's failing
+    raise ValueError(f"❌ DATABASE_URL not found! I am looking in: {os.getcwd()}")
 
-# 3. Handle the 'postgres://' vs 'postgresql://' fix automatically
+# 4. Fix prefix for SQLAlchemy
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# 4. Create the engine
+# 5. Connect
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
