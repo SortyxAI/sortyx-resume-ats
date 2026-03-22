@@ -132,3 +132,39 @@ from fastapi import Response
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     return Response(status_code=204) # 204 means "No Content" - it stops the error
+
+from fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
+from app.database.session import get_db # Ensure this path is correct for your project
+import sqlalchemy
+
+@app.get("/health")
+def health_check(db: Session = Depends(get_db)):
+    health_status = {"status": "ok", "checks": {}}
+    
+    # 1. Check Database (Supabase)
+    try:
+        db.execute(sqlalchemy.text("SELECT 1"))
+        health_status["checks"]["database"] = "Connected ✅"
+    except Exception as e:
+        health_status["checks"]["database"] = f"Failed ❌: {str(e)}"
+        health_status["status"] = "error"
+
+    # 2. Check Google Credentials
+    if os.path.exists("credentials.json"):
+        health_status["checks"]["google_creds"] = "File Found ✅"
+    else:
+        health_status["checks"]["google_creds"] = "Missing ❌"
+        health_status["status"] = "error"
+
+    return health_status
+
+import os
+
+# Render puts secret files here by default
+CREDENTIALS_PATH = "client_secrets1.json" 
+
+if os.path.exists(CREDENTIALS_PATH):
+    print(f"✅ Found Secret File at: {os.path.abspath(CREDENTIALS_PATH)}")
+else:
+    print(f"❌ ERROR: {CREDENTIALS_PATH} NOT FOUND! Check Render Secret Files tab.")
