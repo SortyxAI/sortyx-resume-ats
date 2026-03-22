@@ -1,7 +1,7 @@
 # --- Security & Secrets (CRITICAL) ---
 # Never push these! They contain your passwords and API keys.
 .env
-credentials.json
+client_secrets1.json
 token.json
 *.pem
 *.key
