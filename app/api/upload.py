@@ -17,7 +17,9 @@ router = APIRouter()
 @router.post("/apply")
 async def apply(
     background_tasks: BackgroundTasks,
-    name: str = Form(...),
+    name: str = Form(None),
+    first_name: str = Form(None),
+    last_name: str = Form(None),
     college: str = Form(...),
     role: str = Form(...),
     email: str = Form(...),
@@ -27,6 +29,13 @@ async def apply(
     notes: str = Form(None),
     db: Session = Depends(get_db)
 ):
+    # 0. Handle name construction if not provided directly
+    if not name and (first_name or last_name):
+        name = f"{(first_name or '').strip()} {(last_name or '').strip()}".strip()
+    
+    if not name:
+        name = "Unknown Candidate"
+
     # 1. Check folder and extension
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     file_ext = os.path.splitext(file.filename)[1].lower()

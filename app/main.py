@@ -178,23 +178,3 @@ async def read_index(request: Request):
     # This serves your 'index.html' from the templates folder
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.post("/apply")
-async def handle_apply(
-    first_name: str = Form(...),
-    last_name: str = Form(...),
-    email: str = Form(...),
-    phone: str = Form(...),
-    college: str = Form(...),
-    yop: int = Form(...),
-    role: str = Form(...),
-    file: UploadFile = File(...),
-    notes: str = Form(None),
-    name: str = Form(None) # This catches the 'fullName' you appended in JS
-):
-    try:
-        print(f"✅ Received: {first_name} {last_name} for {role}")
-        # Your Drive/Supabase logic goes here
-        return {"status": "success"}
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        return JSONResponse(status_code=500, content={"message": "Internal Server Error"})
