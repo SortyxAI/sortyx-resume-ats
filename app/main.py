@@ -1,6 +1,6 @@
 import os
 import secrets
-from fastapi import FastAPI, Depends, HTTPException, Request, status
+from fastapi import FastAPI, Depends, HTTPException, Request, status, Form, UploadFile, File
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -58,6 +58,20 @@ def get_current_admin(credentials: HTTPBasicCredentials = Depends(security)):
             headers={"WWW-Authenticate": "Basic"},
         )
     return credentials.username
+
+@app.post("/apply")
+async def handle_apply(
+    name: str = Form(...),
+    email: str = Form(...),
+    phone: str = Form(...),
+    college: str = Form(...),
+    yop: int = Form(...),
+    role: str = Form(...),
+    file: UploadFile = File(...),
+    notes: str = Form(None)
+):
+    # Your logic here...
+    return {"status": "success"}
 
 # --- 🔗 PUBLIC ROUTES (For Candidates) ---
 

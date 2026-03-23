@@ -101,13 +101,16 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', async () => {
-        const roleSelect = document.querySelector('select[name="role"]');
+    const roleSelect = document.querySelector('select[name="role"]');
+    
+    try {
+        const response = await fetch('/get-active-roles');
+        if (!response.ok) throw new Error("Server error");
         
-        try {
-            // ✅ FIX 1: Removed localhost URL
-            const response = await fetch('/get-active-roles');
-            const roles = await response.json();
-            
+        const roles = await response.json();
+        
+        // Only clear the list if we actually got roles back!
+        if (roles && roles.length > 0) {
             roleSelect.innerHTML = '<option value="">Choose a role...</option>';
             roles.forEach(roleTitle => {
                 const opt = document.createElement('option');
@@ -115,10 +118,12 @@
                 opt.textContent = roleTitle;
                 roleSelect.appendChild(opt);
             });
-        } catch (err) {
-            console.error("Failed to load live roles:", err);
         }
-    });
+    } catch (err) {
+        // If it fails, we do nothing! The hardcoded HTML roles will stay visible.
+        console.error("Using fallback roles because:", err);
+    }
+});
 
     const form = document.getElementById('applyForm');
     const submitBtn = document.getElementById('submitBtn');
