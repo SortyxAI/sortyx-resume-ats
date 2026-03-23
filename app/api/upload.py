@@ -22,7 +22,9 @@ async def apply(
     role: str = Form(...),
     email: str = Form(...),
     yop: int = Form(...),
+    phone: str = Form(...),
     file: UploadFile = File(...),
+    notes: str = Form(None),
     db: Session = Depends(get_db)
 ):
     # 1. Check folder and extension
@@ -46,7 +48,8 @@ async def apply(
     # 3. Create Database Entry
     new_candidate = Candidate(
         name=name, college=college, role=role, email=email, 
-        yop=yop, resume_path=file_path, ats_score=0.0, analysis={}
+        phone=phone, yop=yop, resume_path=file_path, ats_score=0.0, 
+        analysis={}, notes=notes
     )
     db.add(new_candidate)
     db.commit()
@@ -87,8 +90,13 @@ async def run_complete_pipeline(candidate_id: int, file_path: str, role: str):
                 drive_name = f"{score}_{candidate.name}_Resume{os.path.splitext(file_path)[1]}"
                 print(f"📤 Uploading {drive_name} to Google Drive...")
                 try:
-                    upload_to_drive(file_path, drive_name)
-                    print("🏁 SUCCESS: File is in Google Drive.")
+                    drive_id = upload_to_drive(file_path, drive_name)
+                    if drive_id:
+                        candidate.drive_id = drive_id
+                        db.commit()
+                        print(f"🏁 SUCCESS: File is in Google Drive. ID: {drive_id}")
+                    else:
+                        print("❌ Drive upload returned no ID.")
                 except Exception as drive_err:
                     print(f"❌ DRIVE ERROR: {drive_err}")
             else:
@@ -98,45 +106,6 @@ async def run_complete_pipeline(candidate_id: int, file_path: str, role: str):
         print(f"❌ PIPELINE CRASH: {e}")
     finally:
         db.close()
-
-# app/api/upload.py
-
-import os
-
-async def process_and_upload(candidate_id: int, file_path: str, role: str, name: str):
-    db = SessionLocal()
-    try:
-        # 1. AI Scoring Logic (Llama 3)
-        # ... your AI logic here ...
-        score = 85 # Placeholder for the AI score
-
-        # 🚀 2. CREATE THE CUSTOM FILENAME
-        # We clean the name and role to avoid issues with special characters
-        clean_name = name.replace(" ", "_")
-        clean_role = role.replace(" ", "_")
-        
-        # Format: Name_Role_Score.pdf (e.g., John_Doe_Python_Developer_85.pdf)
-        custom_drive_name = f"{name.replace(' ', '_')}_{role.replace(' ', '_')}_Resume.pdf"
-
-        print(f"☁️ Syncing to Drive as: {custom_drive_name}")
-
-        # 3. Upload to Drive with the custom name
-        # Ensure your upload_to_drive function accepts this second argument
-        drive_id = upload_to_drive(file_path, custom_drive_name)
-
-        if drive_id:
-            # Update Database with the Drive ID
-            candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
-            if candidate:
-                candidate.drive_id = drive_id
-                db.commit()
-                print(f"✅ Success: {custom_drive_name} uploaded.")
-
-    except Exception as e:
-        print(f"💥 Error: {e}")
-        db.rollback()
-    finally:
-        db.close()
-        # Clean up local file as discussed
+        # Clean up local file after processing
         if os.path.exists(file_path):
-            os.remove(file_path)
+            os.remove(file_path)

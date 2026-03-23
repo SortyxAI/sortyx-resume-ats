@@ -59,19 +59,7 @@ def get_current_admin(credentials: HTTPBasicCredentials = Depends(security)):
         )
     return credentials.username
 
-@app.post("/apply")
-async def handle_apply(
-    name: str = Form(...),
-    email: str = Form(...),
-    phone: str = Form(...),
-    college: str = Form(...),
-    yop: int = Form(...),
-    role: str = Form(...),
-    file: UploadFile = File(...),
-    notes: str = Form(None)
-):
-    # Your logic here...
-    return {"status": "success"}
+# Removed handle_apply since it is handled in app.api.upload
 
 # --- 🔗 PUBLIC ROUTES (For Candidates) ---
 
