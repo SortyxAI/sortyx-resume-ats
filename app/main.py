@@ -168,3 +168,10 @@ if os.path.exists(CREDENTIALS_PATH):
     print(f"✅ Found Secret File at: {os.path.abspath(CREDENTIALS_PATH)}")
 else:
     print(f"❌ ERROR: {CREDENTIALS_PATH} NOT FOUND! Check Render Secret Files tab.")
+
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/")
+async def read_index(request: Request):
+    # This serves your 'index.html' from the templates folder
+    return templates.TemplateResponse("index.html", {"request": request})
