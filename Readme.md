@@ -29,21 +29,6 @@ The platform ensures that only qualified applicants are moved forward in the rec
 
 ---
 
-## Project Structure
-sortyx-resume-ats/
-├── app/
-│   ├── api/            # Route controllers for upload and admin
-│   ├── database/       # Database connection and session management
-│   ├── models/         # SQLAlchemy schema definitions
-│   ├── services/       # Drive API and ATS analysis logic
-│   └── main.py         # Application entry point
-├── static/             # CSS, images, and client-side JavaScript
-├── templates/          # Jinja2 HTML dashboard templates
-├── uploads/            # Temporary storage for processing
-├── .env                # Environment secrets configuration
-├── Dockerfile          # Containerization instructions
-└── requirements.txt    # Project dependencies
-
 # Installation and Deployment
 1. Repository SetupClone the project repository to your local environment:
 git clone https://github.com/sortyx-ventures/resume-ats-automation.git
