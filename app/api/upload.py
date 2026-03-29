@@ -24,7 +24,7 @@ async def apply(
     role: str = Form(...),
     email: str = Form(...),
     yop: int = Form(...),
-    phone: str = Form(...),
+    phone: int = Form(...),
     file: UploadFile = File(...),
     notes: str = Form(None),
     db: Session = Depends(get_db)
@@ -117,4 +117,4 @@ async def run_complete_pipeline(candidate_id: int, file_path: str, role: str):
         db.close()
         # Clean up local file after processing
         if os.path.exists(file_path):
-            os.remove(file_path)
+            os.remove(file_path)
