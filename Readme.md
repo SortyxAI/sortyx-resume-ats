@@ -1,19 +1,36 @@
-# Sortyx: AI Resume and ATS Automation System Overview
-Sortyx Intelligence is an enterprise-grade recruitment automation platform developed for Sortyx Ventures Private Limited. The system optimizes the initial candidate screening process by utilizing Artificial Intelligence to parse resumes, calculate Applicant Tracking System (ATS) scores against specific Job Descriptions (JDs), and automate the storage of high-potential candidates.The platform ensures that only qualified applicants are moved forward in the recruitment funnel, reducing manual overhead and increasing the quality of hire.
-# Core Features
-Automated ATS Scoring: Evaluates resumes based on keyword density, skills alignment, and experience relevance.
-Intelligent Shortlisting: Automatically identifies candidates meeting a predefined threshold for specific roles.
-Cloud Repository Integration: Securely uploads shortlisted resumes to a centralized Google Drive storage system.
-Admin Intelligence Dashboard: Provides real-time visibility into applicant data, scores, and application timelines.
-Dynamic JD Management: Allows administrators to update job requirements and scoring thresholds on the fly.
-Relational Data Management: Persists comprehensive applicant history using a PostgreSQL infrastructure via Supabase.
-# Technical Stack
-Backend Framework -FastAPI (Python 3.10+)
-Database -PostgreSQL (Supabase)ORMSQLAlchemyFile 
-Storage -Google Drive API v3
-Frontend -HTML5, Tailwind CSS, Jinja2
-Server/Hosting -Render / Docker
-# Project Structure 
+# Sortyx Intelligence: AI Resume and ATS Automation System
+
+## Overview
+Sortyx Intelligence is an enterprise-grade recruitment automation platform developed for Sortyx Ventures Private Limited. The system optimizes the initial candidate screening process by utilizing Artificial Intelligence to parse resumes, calculate Applicant Tracking System (ATS) scores against specific Job Descriptions (JDs), and automate the storage of high-potential candidates.
+
+The platform ensures that only qualified applicants are moved forward in the recruitment funnel, reducing manual overhead and increasing the quality of hire.
+
+---
+
+## Core Features
+* **Automated ATS Scoring:** Evaluates resumes based on keyword density, skills alignment, and experience relevance.
+* **Intelligent Shortlisting:** Automatically identifies candidates meeting a predefined threshold for specific roles.
+* **Cloud Repository Integration:** Securely uploads shortlisted resumes to a centralized Google Drive storage system.
+* **Admin Intelligence Dashboard:** Provides real-time visibility into applicant data, scores, and application timelines.
+* **Dynamic JD Management:** Allows administrators to update job requirements and scoring thresholds on the fly.
+* **Relational Data Management:** Persists comprehensive applicant history using a PostgreSQL infrastructure via Supabase.
+
+---
+
+## Technical Stack
+| Component | Technology |
+| :--- | :--- |
+| **Backend Framework** | FastAPI (Python 3.10+) |
+| **Database** | PostgreSQL (Supabase) |
+| **ORM** | SQLAlchemy |
+| **File Storage** | Google Drive API v3 |
+| **Frontend** | HTML5, Tailwind CSS, Jinja2 |
+| **Server/Hosting** | Render / Docker |
+
+---
+
+## Project Structure
+```text
 sortyx-resume-ats/
 ├── app/
 │   ├── api/            # Route controllers for upload and admin
