@@ -30,7 +30,6 @@ The platform ensures that only qualified applicants are moved forward in the rec
 ---
 
 ## Project Structure
-```text
 sortyx-resume-ats/
 ├── app/
 │   ├── api/            # Route controllers for upload and admin
@@ -44,6 +43,7 @@ sortyx-resume-ats/
 ├── .env                # Environment secrets configuration
 ├── Dockerfile          # Containerization instructions
 └── requirements.txt    # Project dependencies
+
 # Installation and Deployment
 1. Repository SetupClone the project repository to your local environment:
 git clone https://github.com/sortyx-ventures/resume-ats-automation.git
@@ -67,10 +67,12 @@ python -c "from app.database.session import engine; from app.models.candidate im
 To start the development server locally:
 uvicorn app.main:app --reload
 The application will be accessible at http://localhost:8000.
+
 # Security and Data PrivacyAuthentication:
 Google Drive interactions are managed through OAuth 2.0 service accounts.
 Encrypted Secrets: Production credentials are managed via environment variables and are never stored in the codebase.
 Data Integrity: Foreign key constraints and transaction management ensure consistent applicant records.
+
 # Contact and Support
 For internal technical support or feature requests, contact the development team at Sortyx Ventures Private Limited.
 Copyright 2026 Sortyx Ventures Private Limited. All Rights Reserved.
