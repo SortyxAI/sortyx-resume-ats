@@ -24,7 +24,7 @@ async def apply(
     role: str = Form(...),
     email: str = Form(...),
     yop: int = Form(...),
-    phone: int = Form(...),
+    phone: str = Form(...),
     file: UploadFile = File(...),
     notes: str = Form(None),
     db: Session = Depends(get_db)
