@@ -1,63 +1,53 @@
-# Sortyx Intelligence: AI Resume and ATS Automation System
+# Sortyx Resume ATS - Deployment Guide
 
-## Overview
-Sortyx Intelligence is an enterprise-grade recruitment automation platform developed for Sortyx Ventures Private Limited. The system optimizes the initial candidate screening process by utilizing Artificial Intelligence to parse resumes, calculate Applicant Tracking System (ATS) scores against specific Job Descriptions (JDs), and automate the storage of high-potential candidates.
+This guide provides the manual step-by-step process to deploy the FastAPI application securely to the internet using **Render.com** (Free Tier).
 
-The platform ensures that only qualified applicants are moved forward in the recruitment funnel, reducing manual overhead and increasing the quality of hire.
-
----
-
-## Core Features
-* **Automated ATS Scoring:** Evaluates resumes based on keyword density, skills alignment, and experience relevance.
-* **Intelligent Shortlisting:** Automatically identifies candidates meeting a predefined threshold for specific roles.
-* **Cloud Repository Integration:** Securely uploads shortlisted resumes to a centralized Google Drive storage system.
-* **Admin Intelligence Dashboard:** Provides real-time visibility into applicant data, scores, and application timelines.
-* **Dynamic JD Management:** Allows administrators to update job requirements and scoring thresholds on the fly.
-* **Relational Data Management:** Persists comprehensive applicant history using a PostgreSQL infrastructure via Supabase.
+## Prerequisites
+Before deploying to Render, make sure your code (including the `Dockerfile` and `docker-compose.yml`) is pushed to your GitHub repository:
+```bash
+git add Dockerfile docker-compose.yml .dockerignore
+git commit -m "Add Docker deployment configuration"
+git push
+```
 
 ---
 
-## Technical Stack
-| Component | Technology |
+## Step 1: Create the Database on Render
+Since the application requires PostgreSQL, we need to spin up a database first.
+1. Go to [Render's Dashboard](https://dashboard.render.com/) and log in with your GitHub account.
+2. Click **New +** in the top right corner and select **PostgreSQL**.
+3. Fill out the database details:
+   - **Name:** `sortyx-resume-db`
+   - **Database / User:** Leave as default.
+   - **Region:** Choose the region closest to you.
+   - **Instance Type:** Select the **Free** tier.
+4. Click **Create Database**.
+5. **Crucial Step:** Once the database status says "Available", scroll down to the **Connections** section and copy the **Internal Database URL** (e.g., `postgres://user:password@hostname/dbname`). Save this URL; you will need it in Step 2.
+
+---
+
+## Step 2: Deploy the Web Service
+Now, you will deploy the actual Python/FastAPI backend, which will connect to the database you just created.
+1. Click **New +** in the top right corner and select **Web Service**.
+2. Under "Connect a repository", search for and select your GitHub repository (`SortyxAI/sortyx-resume-ats`).
+3. Fill out the service details:
+   - **Name:** `sortyx-resume-api`
+   - **Region:** Choose the same region you used for the Database.
+   - **Environment:** Select **Docker** (Render will automatically detect the `Dockerfile` we created).
+   - **Instance Type:** Select the **Free** tier.
+4. Scroll down to the **Advanced** section and click **Add Environment Variable**. Add the following variables exactly as they appear in your local `.env` file:
+
+| Key | Value |
 | :--- | :--- |
-| **Backend Framework** | FastAPI (Python 3.10+) |
-| **Database** | PostgreSQL (Supabase) |
-| **ORM** | SQLAlchemy |
-| **File Storage** | Google Drive API v3 |
-| **Frontend** | HTML5, Tailwind CSS, Jinja2 |
-| **Server/Hosting** | Render / Docker |
+| `DATABASE_URL` | Paste the **Internal Database URL** you copied in Step 1 here! |
+| `GROQ_API_KEY` | *(Your actual Groq API key)* |
+| `GOOGLE_DRIVE_FOLDER_ID` | `1MUhLgTIhbxH3lGGV9YrGG9zrUZ97eFpz` |
+| `ADMIN_USERNAME` | `sortyx_admin` |
+| `ADMIN_PASSWORD` | `Sortyx@123` |
 
----
+5. Click **Create Web Service** at the bottom of the page.
 
-# Installation and Deployment
-1. Repository SetupClone the project repository to your local environment:
-git clone https://github.com/sortyx-ventures/resume-ats-automation.git
-cd sortyx-resume-ats
-2. Environment Configuration
-Create a virtual environment and install the required dependencies:
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-3. Configuration Variables
-Create a .env file in the root directory. This file must contain the following variables for the system to function:
-4. Database Configuration
-DATABASE_URL= contact developer [private]
-Google Drive Integration
-DRIVE_FOLDER_ID= contact developer [private]
-GOOGLE_APPLICATION_CREDENTIALS= contact developer [private]
-5. Database Initialization
-Run the following command to synchronize the database schema with your Supabase instance:
-python -c "from app.database.session import engine; from app.models.candidate import Base; Base.metadata.create_all(bind=engine)"
-6. Execution
-To start the development server locally:
-uvicorn app.main:app --reload
-The application will be accessible at http://localhost:8000.
-
-# Security and Data PrivacyAuthentication:
-Google Drive interactions are managed through OAuth 2.0 service accounts.
-Encrypted Secrets: Production credentials are managed via environment variables and are never stored in the codebase.
-Data Integrity: Foreign key constraints and transaction management ensure consistent applicant records.
-
-# Contact and Support
-For internal technical support or feature requests, contact the development team at Sortyx Ventures Private Limited.
-Copyright 2026 Sortyx Ventures Private Limited. All Rights Reserved.
+## Step 3: Monitor the Build
+Render will now pull your code, build the Docker container using the `Dockerfile`, and deploy it. 
+You can watch the logs on the dashboard. This process usually takes 2-4 minutes.
+Once you see **`Your service is live 🎉`** in the logs, you can access your completely deployed API using the `.onrender.com` link located at the top left of the dashboard.

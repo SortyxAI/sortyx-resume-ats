@@ -2,135 +2,508 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin | SortyX Job Management</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Inter', sans-serif; }</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SortyX Admin · System Health</title>
+    <meta name="description" content="SortyX internal admin dashboard — real-time health of Google Drive, Sheets, and OAuth token.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #0d1117;
+            --surface:   #161b22;
+            --surface2:  #1c2128;
+            --border:    rgba(255,255,255,0.07);
+            --text:      #e6edf3;
+            --muted:     #8b949e;
+            --green:     #3fb950;
+            --green-bg:  rgba(63,185,80,0.12);
+            --red:       #f85149;
+            --red-bg:    rgba(248,81,73,0.12);
+            --yellow:    #d29922;
+            --yellow-bg: rgba(210,153,34,0.12);
+            --blue:      #58a6ff;
+            --blue-bg:   rgba(88,166,255,0.1);
+            --accent:    #7c3aed;
+            --accent2:   #a855f7;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        /* ── Top nav ── */
+        .navbar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+        }
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text);
+            text-decoration: none;
+        }
+        .brand-logo {
+            width: 30px; height: 30px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+        }
+        .navbar-actions { display: flex; align-items: center; gap: 12px; }
+        .btn-refresh {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .btn-refresh:hover { background: var(--surface); border-color: var(--accent); color: var(--accent2); }
+        .btn-refresh.spinning svg { animation: spin 1s linear infinite; }
+        .btn-back {
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .btn-back:hover { color: var(--text); }
+
+        /* ── Layout ── */
+        .page { max-width: 960px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+        /* ── Page header ── */
+        .page-header { margin-bottom: 2.5rem; }
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--text) 40%, var(--muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+        }
+        .page-header p { color: var(--muted); font-size: 0.875rem; }
+        .last-checked {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-top: 10px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        .pulse-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse 2s infinite;
+        }
+
+        /* ── Overall status banner ── */
+        .status-banner {
+            border-radius: 14px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border: 1px solid transparent;
+            transition: all 0.4s ease;
+        }
+        .status-banner.ok    { background: var(--green-bg);  border-color: rgba(63,185,80,0.25); }
+        .status-banner.error { background: var(--red-bg);    border-color: rgba(248,81,73,0.25); }
+        .status-banner.warn  { background: var(--yellow-bg); border-color: rgba(210,153,34,0.25); }
+        .status-banner.loading { background: var(--surface2); border-color: var(--border); }
+        .banner-icon { font-size: 1.75rem; flex-shrink: 0; }
+        .banner-text h2 { font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
+        .banner-text p  { font-size: 0.8rem; color: var(--muted); }
+
+        /* ── Section label ── */
+        .section-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 1rem;
+        }
+
+        /* ── Stats row ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.25rem;
+            transition: border-color 0.3s, transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.14); }
+        .stat-label { font-size: 0.75rem; color: var(--muted); font-weight: 500; margin-bottom: 6px; }
+        .stat-value { font-size: 2rem; font-weight: 800; color: var(--text); line-height: 1; }
+        .stat-sub   { font-size: 0.72rem; color: var(--muted); margin-top: 6px; }
+
+        /* ── Health cards grid ── */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        .health-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
+        }
+        .health-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            border-radius: 16px 16px 0 0;
+            background: var(--border);
+            transition: background 0.4s;
+        }
+        .health-card.ok::before    { background: var(--green); }
+        .health-card.error::before { background: var(--red); }
+        .health-card.warn::before  { background: var(--yellow); }
+        .health-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+
+        .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem; }
+        .card-icon-wrap {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+        .card-icon-wrap.ok    { background: var(--green-bg);  }
+        .card-icon-wrap.error { background: var(--red-bg);    }
+        .card-icon-wrap.warn  { background: var(--yellow-bg); }
+        .card-icon-wrap.loading { background: var(--surface2); }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
+        .status-badge.ok    { background: var(--green-bg);  color: var(--green);  }
+        .status-badge.error { background: var(--red-bg);    color: var(--red);    }
+        .status-badge.warn  { background: var(--yellow-bg); color: var(--yellow); }
+        .status-badge.loading { background: var(--surface2); color: var(--muted); }
+        .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+        .badge-dot.pulse { animation: pulse 1.5s infinite; }
+
+        .card-name { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+        .card-detail {
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        .card-meta {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.72rem;
+            color: var(--muted);
+        }
+        .card-meta strong { color: var(--text); }
+
+        /* skeleton loader */
+        .skeleton {
+            border-radius: 6px;
+            background: linear-gradient(90deg, var(--surface2) 25%, var(--surface) 50%, var(--surface2) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        .skel-line { height: 12px; margin: 6px 0; }
+        .skel-short { width: 55%; }
+
+        @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+        @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        @keyframes spin    { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        @keyframes fadeIn  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+        .fade-in { animation: fadeIn 0.4s ease forwards; }
+
+        /* responsive */
+        @media (max-width: 600px) {
+            .page { padding: 1.5rem 1rem 3rem; }
+            .page-header h1 { font-size: 1.4rem; }
+        }
+    </style>
 </head>
-<body class="bg-slate-50 min-h-screen p-4 md:p-8">
+<body>
 
-    <div class="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl border border-slate-200 overflow-hidden">
-        
-        <div id="publishSuccess" class="hidden bg-emerald-600 text-white p-4 text-center font-bold text-sm">
-            🚀 JOB PUBLISHED SUCCESSFULLY
-        </div>
-
-        <div class="bg-slate-800 p-6 text-white flex justify-between items-center">
-            <h1 class="text-xl font-bold">SortyX Admin: Job Management</h1>
-            <a href="/" class="text-xs bg-slate-700 px-3 py-1 rounded hover:bg-slate-600 transition-colors">← Back to Site</a>
-        </div>
-
-        <form id="jdForm" class="p-8 space-y-6">
-            <input type="hidden" name="job_id" id="jobId">
-            
-            <div>
-                <label class="block text-sm font-bold text-slate-700 mb-2">Job Title</label>
-                <input type="text" name="title" id="jobTitle" required placeholder="e.g. Senior Python Developer"
-                    class="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
-            </div>
-
-            <div>
-                <label class="block text-sm font-bold text-slate-700 mb-2">Detailed Job Description</label>
-                <textarea name="description" id="jobDesc" required rows="8" placeholder="Paste requirements here..."
-                    class="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none resize-none transition-all"></textarea>
-            </div>
-
-            <div class="bg-slate-50 p-6 rounded-xl border border-slate-100">
-                <label class="block text-sm font-bold text-slate-700 mb-2">Minimum ATS Score Threshold</label>
-                <input type="range" name="min_score" id="scoreRange" min="0" max="100" value="70" 
-                    class="w-full h-2 bg-indigo-200 rounded-lg appearance-none cursor-pointer">
-                <div class="text-center font-bold text-indigo-600 mt-2" id="scoreValue">70%</div>
-            </div>
-
-            <button type="submit" id="saveBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-100 transition-all active:scale-95 disabled:bg-slate-400">
-                Save & Publish Job Role
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="/admin" class="navbar-brand">
+            <div class="brand-logo">⚙</div>
+            SortyX Admin
+        </a>
+        <div class="navbar-actions">
+            <button class="btn-refresh" id="refreshBtn" onclick="fetchHealth()">
+                <svg id="refreshIcon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="1 4 1 10 7 10"></polyline>
+                    <path d="M3.51 15a9 9 0 1 0 .49-3.51"></path>
+                </svg>
+                Refresh
             </button>
-        </form>
-
-        <div class="p-8 border-t border-slate-100 bg-slate-50">
-            <h3 class="font-bold text-slate-700 mb-4 flex items-center">
-                <span class="mr-2">📁</span> Active Roles (Click to Edit)
-            </h3>
-            <div id="jobList" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                </div>
+            <a href="/" class="btn-back">← Back to site</a>
         </div>
-    </div>
+    </nav>
+
+    <main class="page">
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>System Health Dashboard</h1>
+            <p>Monitor the status of Google Drive, Sheets, OAuth token, and credentials in real-time.</p>
+            <div class="last-checked">
+                <div class="pulse-dot" id="pulseDot" style="background:var(--muted)"></div>
+                <span id="lastCheckedText">Checking…</span>
+            </div>
+        </div>
+
+        <!-- Overall status banner -->
+        <div class="status-banner loading" id="bannerEl">
+            <div class="banner-icon" id="bannerIcon">⏳</div>
+            <div class="banner-text">
+                <h2 id="bannerTitle">Loading status…</h2>
+                <p id="bannerSub">Connecting to Google APIs</p>
+            </div>
+        </div>
+
+        <!-- Stats row -->
+        <p class="section-label">At a Glance</p>
+        <div class="stats-row" id="statsRow">
+            <div class="stat-card">
+                <div class="stat-label">Applicant Rows</div>
+                <div class="stat-value" id="statRows">—</div>
+                <div class="stat-sub">in Google Sheet</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Services Healthy</div>
+                <div class="stat-value" id="statHealthy">—</div>
+                <div class="stat-sub">out of 4 checks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Token Status</div>
+                <div class="stat-value" id="statToken" style="font-size:1.3rem; padding-top:4px">—</div>
+                <div class="stat-sub">OAuth 2.0 credential</div>
+            </div>
+        </div>
+
+        <!-- Health cards -->
+        <p class="section-label">Service Details</p>
+        <div class="cards-grid" id="cardsGrid">
+            <!-- Skeleton cards while loading -->
+            <div class="health-card" id="sk1">
+                <div class="card-top">
+                    <div class="card-icon-wrap loading skeleton" style="width:44px;height:44px"></div>
+                </div>
+                <div class="skeleton skel-line" style="width:40%;height:14px;margin-bottom:10px"></div>
+                <div class="skeleton skel-line"></div>
+                <div class="skeleton skel-line skel-short"></div>
+            </div>
+            <div class="health-card" id="sk2">
+                <div class="card-top">
+                    <div class="card-icon-wrap loading skeleton" style="width:44px;height:44px"></div>
+                </div>
+                <div class="skeleton skel-line" style="width:40%;height:14px;margin-bottom:10px"></div>
+                <div class="skeleton skel-line"></div>
+                <div class="skeleton skel-line skel-short"></div>
+            </div>
+            <div class="health-card" id="sk3">
+                <div class="card-top">
+                    <div class="card-icon-wrap loading skeleton" style="width:44px;height:44px"></div>
+                </div>
+                <div class="skeleton skel-line" style="width:40%;height:14px;margin-bottom:10px"></div>
+                <div class="skeleton skel-line"></div>
+                <div class="skeleton skel-line skel-short"></div>
+            </div>
+            <div class="health-card" id="sk4">
+                <div class="card-top">
+                    <div class="card-icon-wrap loading skeleton" style="width:44px;height:44px"></div>
+                </div>
+                <div class="skeleton skel-line" style="width:40%;height:14px;margin-bottom:10px"></div>
+                <div class="skeleton skel-line"></div>
+                <div class="skeleton skel-line skel-short"></div>
+            </div>
+        </div>
+
+    </main>
 
     <script>
-        const form = document.getElementById('jdForm');
-        const saveBtn = document.getElementById('saveBtn');
-        const successBanner = document.getElementById('publishSuccess');
-        const scoreRange = document.getElementById('scoreRange');
-        const scoreValue = document.getElementById('scoreValue');
+        const SERVICES = [
+            { key: 'credentials_file', label: 'OAuth Credentials File',  icon: '🔑', meta: 'client_secrets1.json' },
+            { key: 'token',            label: 'OAuth Access Token',       icon: '🛡️', meta: 'token.json' },
+            { key: 'drive',            label: 'Google Drive API',         icon: '📁', meta: 'drive.googleapis.com' },
+            { key: 'sheets',           label: 'Google Sheets API',        icon: '📊', meta: 'sheets.googleapis.com' },
+        ];
 
-        // Update threshold display
-        scoreRange.oninput = () => scoreValue.innerText = `${scoreRange.value}%`;
-
-        // Handle Form Submission
-        form.onsubmit = async (e) => {
-    e.preventDefault();
-    const saveBtn = document.getElementById('saveBtn');
-    const successBanner = document.getElementById('publishSuccess');
-    
-    saveBtn.disabled = true;
-    saveBtn.innerText = "Syncing...";
-
-    const formData = new FormData(form);
-    
-    // 🚀 CRITICAL: Convert the payload to the right format
-    const payload = {
-        title: formData.get('title'),
-        description: formData.get('description'),
-        min_score: parseInt(formData.get('min_score')) // Force it to be a number
-    };
-
-    console.log("Sending Payload:", payload); // Debugging: Check your console!
-
-    try {
-        const response = await fetch('/admin/create-job', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if (response.ok) {
-            console.log("✅ Success response received");
-            successBanner.classList.remove('hidden'); // Show the banner
-            form.reset();
-            document.getElementById('scoreValue').innerText = "70%";
-            
-            // Refresh the job list below
-            if (typeof loadJobs === 'function') loadJobs(); 
-            
-            setTimeout(() => successBanner.classList.add('hidden'), 5000);
-        } else {
-            const errorData = await response.json();
-            console.error("Server Error:", errorData);
-            alert("Error: " + JSON.stringify(errorData.detail));
+        function buildBadge(status) {
+            const map = {
+                ok:      { label: 'Healthy',  cls: 'ok'    },
+                error:   { label: 'Error',    cls: 'error'  },
+                warn:    { label: 'Warning',  cls: 'warn'   },
+                unknown: { label: 'Unknown',  cls: 'loading'},
+            };
+            const m = map[status] || map.unknown;
+            return `<span class="status-badge ${m.cls}"><span class="badge-dot ${status === 'unknown' ? 'pulse' : ''}"></span>${m.label}</span>`;
         }
-    } catch (err) {
-        console.error("Fetch Error:", err);
-        alert("Could not connect to the server.");
-    } finally {
-        saveBtn.disabled = false;
-        saveBtn.innerText = "Save & Publish Job Role";
-    }
-};
-        // Function to load jobs (You'll need an endpoint for this)
-        async function loadJobs() {
-            const listDiv = document.getElementById('jobList');
-            try {
-                const res = await fetch('/get-active-roles');
-                const roles = await res.json();
-                listDiv.innerHTML = roles.map(role => `
-                    <div class="p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-500 hover:shadow-sm transition-all text-sm font-medium text-slate-600">
-                        ${role}
+
+        function buildCard(svc, data) {
+            const status = data?.status || 'unknown';
+            const detail = data?.detail || 'No data received';
+            const rowCount = data?.row_count;
+
+            let extra = '';
+            if (svc.key === 'sheets' && rowCount !== null && rowCount !== undefined) {
+                extra = `<div class="card-meta"><strong>${rowCount}</strong> applicant rows in sheet</div>`;
+            }
+
+            return `
+                <div class="health-card ${status} fade-in">
+                    <div class="card-top">
+                        <div class="card-icon-wrap ${status}">${svc.icon}</div>
+                        ${buildBadge(status)}
                     </div>
-                `).join('');
-            } catch (e) { console.log("List load failed"); }
+                    <div class="card-name">${svc.label}</div>
+                    <div class="card-detail">${escapeHtml(detail)}</div>
+                    <div class="card-meta">Endpoint: <strong>${svc.meta}</strong></div>
+                    ${extra}
+                </div>
+            `;
         }
 
-        window.onload = loadJobs;
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g,'&amp;')
+                .replace(/</g,'&lt;')
+                .replace(/>/g,'&gt;');
+        }
+
+        function setRefreshSpinning(spinning) {
+            const btn = document.getElementById('refreshBtn');
+            btn.disabled = spinning;
+            btn.classList.toggle('spinning', spinning);
+        }
+
+        async function fetchHealth() {
+            setRefreshSpinning(true);
+            document.getElementById('lastCheckedText').textContent = 'Checking…';
+            document.getElementById('pulseDot').style.background = 'var(--yellow)';
+
+            // Reset banner to loading
+            const banner = document.getElementById('bannerEl');
+            banner.className = 'status-banner loading';
+            document.getElementById('bannerIcon').textContent = '⏳';
+            document.getElementById('bannerTitle').textContent = 'Checking systems…';
+            document.getElementById('bannerSub').textContent = 'Contacting Google APIs';
+
+            try {
+                const res = await fetch('/admin/health-status');
+                if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                const data = await res.json();
+
+                // ── Render cards ──
+                const cardsHtml = SERVICES.map(svc => buildCard(svc, data[svc.key])).join('');
+                document.getElementById('cardsGrid').innerHTML = cardsHtml;
+
+                // ── Stats ──
+                const healthyCount = SERVICES.filter(s => (data[s.key]?.status) === 'ok').length;
+                document.getElementById('statRows').textContent =
+                    data.sheets?.row_count !== null && data.sheets?.row_count !== undefined
+                    ? data.sheets.row_count
+                    : '—';
+                document.getElementById('statHealthy').textContent = `${healthyCount} / ${SERVICES.length}`;
+                document.getElementById('statToken').textContent =
+                    data.token?.status === 'ok' ? '✅ Valid' : '❌ Invalid';
+
+                // ── Overall banner ──
+                const allOk    = healthyCount === SERVICES.length;
+                const anyError = SERVICES.some(s => (data[s.key]?.status) === 'error');
+                const state    = allOk ? 'ok' : anyError ? 'error' : 'warn';
+
+                banner.className = `status-banner ${state}`;
+                document.getElementById('bannerIcon').textContent  = allOk ? '✅' : anyError ? '🔴' : '⚠️';
+                document.getElementById('bannerTitle').textContent = allOk
+                    ? 'All systems operational'
+                    : anyError
+                        ? 'One or more services are down'
+                        : 'Some services need attention';
+                document.getElementById('bannerSub').textContent = allOk
+                    ? `${SERVICES.length}/${SERVICES.length} checks passed — everything looks good`
+                    : `${healthyCount}/${SERVICES.length} checks passed`;
+
+                // ── Last checked ──
+                const checkedAt = data.checked_at
+                    ? new Date(data.checked_at).toLocaleTimeString()
+                    : new Date().toLocaleTimeString();
+                document.getElementById('lastCheckedText').textContent = `Last checked: ${checkedAt}`;
+                document.getElementById('pulseDot').style.background = allOk ? 'var(--green)' : anyError ? 'var(--red)' : 'var(--yellow)';
+
+            } catch (err) {
+                document.getElementById('cardsGrid').innerHTML = `
+                    <div style="grid-column:1/-1;padding:2rem;text-align:center;color:var(--muted);">
+                        <div style="font-size:2rem;margin-bottom:0.5rem">⚠️</div>
+                        <p style="font-weight:600;color:var(--red)">Failed to fetch health status</p>
+                        <p style="font-size:0.8rem;margin-top:4px">${escapeHtml(err.message)}</p>
+                    </div>
+                `;
+                banner.className = 'status-banner error';
+                document.getElementById('bannerIcon').textContent = '🔴';
+                document.getElementById('bannerTitle').textContent = 'Could not reach health endpoint';
+                document.getElementById('bannerSub').textContent = err.message;
+                document.getElementById('lastCheckedText').textContent = 'Check failed';
+                document.getElementById('pulseDot').style.background = 'var(--red)';
+            } finally {
+                setRefreshSpinning(false);
+            }
+        }
+
+        // Auto-refresh every 60 seconds
+        fetchHealth();
+        setInterval(fetchHealth, 60000);
     </script>
 </body>
 </html>
