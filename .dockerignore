@@ -7,3 +7,5 @@ __pycache__/
 .git
 .env
 uploads/
+token.json
+client_secrets1.json

@@ -23,8 +23,11 @@ COPY . .
 # Create uploads directory
 RUN mkdir -p uploads
 
-# Expose the application port
-EXPOSE 8000
+# Make the entrypoint script executable
+RUN chmod +x /app/entrypoint.sh
 
-# Start the uvicorn server
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Expose the application port
+EXPOSE 9000
+
+# Start the uvicorn server through the entrypoint helper
+CMD ["/app/entrypoint.sh"]
